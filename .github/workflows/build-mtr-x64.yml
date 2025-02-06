@@ -1,0 +1,46 @@
+name: Build mtr for x86_64
+
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # 使用最新 Ubuntu 系统
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autotools-dev automake libncurses5-dev make gcc
+
+      - name: Bootstrap and configure
+        run: |
+          ./bootstrap.sh
+          ./configure CFLAGS="-static" --prefix=/usr/local
+
+      - name: Build
+        run: make
+
+      - name: Package binary
+        run: |
+          mkdir -p release
+          cp mtr release/mtr
+          strip release/mtr  # 可选：减小二进制体积
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: mtr-x86_64
+          path: release/mtr
+          
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        if: github.ref == 'refs/heads/main'
+        with:
+          files: release/mtr
+          tag_name: latest
+          generate_release_notes: true
