@@ -2,8 +2,8 @@ name: Build mtr for x86_64 (Static)
 
 on:
   push:
-    branches: [ "master" ] 
-  workflow_dispatch:        # 允许手动触发
+    branches: [ "master" ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -18,23 +18,24 @@ jobs:
           sudo apt-get install -y autotools-dev automake libncurses5-dev make gcc
 
       - name: Bootstrap
-        run: ./bootstrap.sh  # 确保生成 configure 脚本
+        run: ./bootstrap.sh
 
       - name: Configure (Static Build)
         run: |
-          ./configure CFLAGS="-static" LDFLAGS="-static" --prefix=/usr/local  # 强制静态链接
+          ./configure CFLAGS="-static" LDFLAGS="-static" --prefix=/usr/local
 
       - name: Build
-        run: make -j$(nproc)  # 启用多线程编译加速
+        run: make -j$(nproc)
 
-      - name: Package binary
+      - name: Package binaries
         run: |
           mkdir -p release
-          cp mtr release/mtr
-          strip release/mtr  # 移除调试符号，减小文件体积
+          cp mtr release/mtr                # 主程序
+          cp mtr-packet release/mtr-packet  # 必须包含此文件
+          strip release/mtr release/mtr-packet
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: mtr-static-x86_64
-          path: release/mtr
+          path: release/
