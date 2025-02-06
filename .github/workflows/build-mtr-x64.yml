@@ -32,7 +32,7 @@ jobs:
           strip release/mtr  # 可选：减小二进制体积
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mtr-x86_64
           path: release/mtr
