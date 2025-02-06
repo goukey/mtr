@@ -2,7 +2,7 @@ name: Build mtr for x86_64 (Static)
 
 on:
   push:
-    branches: [ "master" ]  # 已从 main 改为 master
+    branches: [ "master" ] 
   workflow_dispatch:        # 允许手动触发
 
 jobs:
@@ -34,7 +34,7 @@ jobs:
           strip release/mtr  # 移除调试符号，减小文件体积
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mtr-static-x86_64
           path: release/mtr
