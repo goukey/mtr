@@ -1,13 +1,13 @@
-name: Build mtr for x86_64
+name: Build mtr for x86_64 (Static)
 
 on:
   push:
-    branches: [ "master" ]
-  workflow_dispatch:  # 允许手动触发
+    branches: [ "master" ]  # 已从 main 改为 master
+  workflow_dispatch:        # 允许手动触发
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # 使用最新 Ubuntu 系统
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -17,30 +17,24 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y autotools-dev automake libncurses5-dev make gcc
 
-      - name: Bootstrap and configure
+      - name: Bootstrap
+        run: ./bootstrap.sh  # 确保生成 configure 脚本
+
+      - name: Configure (Static Build)
         run: |
-          ./bootstrap.sh
-          ./configure CFLAGS="-static" --prefix=/usr/local
+          ./configure CFLAGS="-static" LDFLAGS="-static" --prefix=/usr/local  # 强制静态链接
 
       - name: Build
-        run: make
+        run: make -j$(nproc)  # 启用多线程编译加速
 
       - name: Package binary
         run: |
           mkdir -p release
           cp mtr release/mtr
-          strip release/mtr  # 可选：减小二进制体积
+          strip release/mtr  # 移除调试符号，减小文件体积
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
-          name: mtr-x86_64
+          name: mtr-static-x86_64
           path: release/mtr
-          
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        if: github.ref == 'refs/heads/main'
-        with:
-          files: release/mtr
-          tag_name: latest
-          generate_release_notes: true
