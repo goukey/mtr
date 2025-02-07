@@ -44,23 +44,23 @@ jobs:
           name: mtr-static-x86_64
           path: release/mtr-static-x86_64.tar.gz
 
-      - name: Auto-generate version tag
-        id: version
+      - name: Get latest tag
+        id: git_tag
         run: |
-          DATE_VERSION=$(date +"%Y.%m.%d")
-          echo "version=${DATE_VERSION}" >> $GITHUB_OUTPUT
+          LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+          echo "tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: "mtr Static Build (${{ steps.version.outputs.version }})"
+          tag_name: ${{ steps.git_tag.outputs.tag }}
+          name: "mtr Static Build (${{ steps.git_tag.outputs.tag }})"
           body: |
             **静态编译的 mtr 工具包（包含 `mtr` 和 `mtr-packet`）**
             - 架构: x86_64
             - 编译时间: ${{ github.run_created_at }}
             - Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
           files: |
-            release/mtr-static-x86_64.tar.gz  # 直接上传压缩包
+            release/mtr-static-x86_64.tar.gz  # 上传压缩包
           draft: false
           prerelease: false
