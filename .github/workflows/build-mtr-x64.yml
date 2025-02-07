@@ -75,7 +75,7 @@ jobs:
 
       - name: Create GitHub Release
         id: create_release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v2.2.1
         with:
           tag_name: v${{ steps.mtr_version.outputs.version }}
           name: "mtr Static Build (v${{ steps.mtr_version.outputs.version }})"
@@ -88,27 +88,15 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Debug release info
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release view v${{ steps.mtr_version.outputs.version }} --json id,assets
-
       - name: Remove Source code assets
+        if: success()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           RELEASE_ID=$(gh api repos/${{ github.repository }}/releases/tags/v${{ steps.mtr_version.outputs.version }} --jq '.id')
-          if [ -z "$RELEASE_ID" ]; then
-            echo "Release not created successfully"
-            exit 1
-          fi
-          ASSET_IDS=$(gh api repos/${{ github.repository }}/releases/$RELEASE_ID/assets --jq '.[] | select(.name == "Source code (zip)" or .name == "Source code (tar.gz)") | .id')
-          if [ -z "$ASSET_IDS" ]; then
-            echo "No Source code assets found"
-          else
-            for ID in $ASSET_IDS; do
-              echo "Deleting asset with ID: $ID"
-              gh api repos/${{ github.repository }}/releases/assets/$ID -X DELETE
-            done
-          fi
+          ASSET_IDS=$(gh api repos/${{ github.repository }}/releases/$RELEASE_ID/assets --jq '.[] | select(.name == "Source code
+(zip)" or .name == "Source code
+(tar.gz)") | .id')
+          for ID in $ASSET_IDS; do
+            gh api repos/${{ github.repository }}/releases/assets/$ID -X DELETE
+          done
