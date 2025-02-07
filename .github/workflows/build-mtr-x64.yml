@@ -55,7 +55,8 @@ jobs:
           else
             echo "Tar file does not exist."
             exit 1
-          
+          fi
+
       - name: Get latest tag
         id: git_tag
         run: |
