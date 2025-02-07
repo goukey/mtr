@@ -36,6 +36,13 @@ jobs:
           MTR_VERSION=$(./mtr -v | grep -oP '\d+\.\d+')
           echo "version=${MTR_VERSION}" >> $GITHUB_OUTPUT
 
+      - name: Delete existing release and tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete v${{ steps.mtr_version.outputs.version }} -y
+          git push --delete origin v${{ steps.mtr_version.outputs.version }}
+
       - name: Package binaries
         run: |
           mkdir -p release
@@ -64,7 +71,6 @@ jobs:
           fi
 
       - name: Create GitHub Release using gh
-        id: create_release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
