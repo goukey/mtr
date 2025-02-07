@@ -67,7 +67,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create v${{ steps.mtr_version.outputs.version }} release/mtr-static-x86_64-${{ steps.mtr_version.outputs.version }}.tar.gz -t "mtr Static Build (v${{ steps.mtr_version.outputs.version }})" -n "**静态编译的 mtr 工具包（包含 `mtr` 和 `mtr-packet`）**
+          gh release create v${{ steps.mtr_version.outputs.version }} -t "mtr Static Build (v${{ steps.mtr_version.outputs.version }})" -n "**静态编译的 mtr 工具包（包含 `mtr` 和 `mtr-packet`）**
           - 架构: x86_64
           - 编译时间: ${{ github.run_created_at }}
-          - Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"
+          - Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" --target `git rev-parse HEAD`
+
+      - name: Upload release asset
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload v${{ steps.mtr_version.outputs.version }} release/mtr-static-x86_64-${{ steps.mtr_version.outputs.version }}.tar.gz
