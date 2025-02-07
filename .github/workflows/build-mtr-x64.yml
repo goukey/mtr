@@ -37,20 +37,22 @@ jobs:
           strip release/mtr release/mtr-packet
 
           # 将两个文件打包为 .tar.gz
-          tar -czvf release/mtr-static-x86_64.tar.gz -C release/ mtr mtr-packet
+          mv mtr mtr-${{ steps.mtr_version.outputs.version }}
+          mv mtr-packet mtr-packet-${{ steps.mtr_version.outputs.version }}
+          tar -czvf release/mtr-static-x86_64-${{ steps.mtr_version.outputs.version }}.tar.gz -C release/ mtr-${{ steps.mtr_version.outputs.version }} mtr-packet-${{ steps.mtr_version.outputs.version }}
 
       - name: Upload artifact (for debugging)
         uses: actions/upload-artifact@v4
         with:
           name: mtr-static-x86_64
-          path: release/mtr-static-x86_64.tar.gz
+          path: release/mtr-static-x86_64-${{ steps.mtr_version.outputs.version }}.tar.gz
 
       - name: List release directory files
         run: ls -l release
 
       - name: Check if tar file exists
         run: |
-          if [ -f release/mtr-static-x86_64.tar.gz ]; then
+          if [ -f release/mtr-static-x86_64-${{ steps.mtr_version.outputs.version }}.tar.gz ]; then
             echo "Tar file exists."
           else
             echo "Tar file does not exist."
@@ -67,7 +69,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create v${{ steps.mtr_version.outputs.version }} release/mtr-static-x86_64.tar.gz -t "mtr Static Build (v${{ steps.mtr_version.outputs.version }})" -n "**静态编译的 mtr 工具包（包含 `mtr` 和 `mtr-packet`）**
+          gh release create v${{ steps.mtr_version.outputs.version }} release/mtr-static-x86_64-${{ steps.mtr_version.outputs.version }}.tar.gz -t "mtr Static Build (v${{ steps.mtr_version.outputs.version }})" -n "**静态编译的 mtr 工具包（包含 `mtr` 和 `mtr-packet`）**
           - 架构: x86_64
           - 编译时间: ${{ github.run_created_at }}
           - Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"
