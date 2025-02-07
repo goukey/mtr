@@ -1,4 +1,4 @@
-name: Build mtr for x86_64 (Static)
+name: Build and Release mtr (x86_64 Static)
 
 on:
   push:
@@ -6,11 +6,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install dependencies
         run: |
@@ -30,12 +32,35 @@ jobs:
       - name: Package binaries
         run: |
           mkdir -p release
-          cp mtr release/mtr                # 主程序
-          cp mtr-packet release/mtr-packet  # 必须包含此文件
+          cp mtr mtr-packet release/
           strip release/mtr release/mtr-packet
 
-      - name: Upload artifact
+          # 将两个文件打包为 .tar.gz
+          tar -czvf release/mtr-static-x86_64.tar.gz -C release/ mtr mtr-packet
+
+      - name: Upload artifact (for debugging)
         uses: actions/upload-artifact@v4
         with:
           name: mtr-static-x86_64
-          path: release/
+          path: release/mtr-static-x86_64.tar.gz
+
+      - name: Auto-generate version tag
+        id: version
+        run: |
+          DATE_VERSION=$(date +"%Y.%m.%d")
+          echo "version=${DATE_VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: "mtr Static Build (${{ steps.version.outputs.version }})"
+          body: |
+            **静态编译的 mtr 工具包（包含 `mtr` 和 `mtr-packet`）**
+            - 架构: x86_64
+            - 编译时间: ${{ github.run_created_at }}
+            - Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+          files: |
+            release/mtr-static-x86_64.tar.gz  # 直接上传压缩包
+          draft: false
+          prerelease: false
