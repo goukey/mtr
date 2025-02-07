@@ -18,6 +18,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y autotools-dev automake libncurses5-dev make gcc
+          sudo apt-get install -y gh
 
       - name: Bootstrap
         run: ./bootstrap.sh
@@ -62,7 +63,18 @@ jobs:
             exit 1
           fi
 
+      - name: Delete existing release and tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_ID=$(gh api repos/${{ github.repository }}/releases/tags/v${{ steps.mtr_version.outputs.version }} --jq '.id' 2>/dev/null || echo '')
+          if [ -n "$RELEASE_ID" ]; then
+            gh release delete v${{ steps.mtr_version.outputs.version }} -y
+            git push --delete origin v${{ steps.mtr_version.outputs.version }}
+          fi
+
       - name: Create GitHub Release
+        id: create_release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.mtr_version.outputs.version }}
@@ -77,11 +89,12 @@ jobs:
           prerelease: false
 
       - name: Remove Source code assets
+        if: success()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           RELEASE_ID=$(gh api repos/${{ github.repository }}/releases/tags/v${{ steps.mtr_version.outputs.version }} --jq '.id')
-          ASSET_IDS=$(gh api repos/${{ github.repository }}/releases/$RELEASE_ID/assets --jq '.[] | select(.name | test("Source code")) | .id')
+          ASSET_IDS=$(gh api repos/${{ github.repository }}/releases/$RELEASE_ID/assets --jq '.[] | select(.name == "Source code (zip)" or .name == "Source code (tar.gz)") | .id')
           for ID in $ASSET_IDS; do
             gh api repos/${{ github.repository }}/releases/assets/$ID -X DELETE
           done
