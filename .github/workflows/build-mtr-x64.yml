@@ -64,6 +64,7 @@ jobs:
           fi
 
       - name: Create GitHub Release using gh
+        id: create_release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -77,3 +78,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload v${{ steps.mtr_version.outputs.version }} release/mtr-static-x86_64.tar.gz
+
+      - name: Remove Source code assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_ID=$(gh release view v${{ steps.mtr_version.outputs.version }} --json id -q ".id")
+          ASSET_IDS=$(gh api repos/${{ github.repository }}/releases/$RELEASE_ID/assets --jq '.[] | select(.name | test("Source code")) | .id')
+          for ID in $ASSET_IDS; do
+            gh api repos/${{ github.repository }}/releases/assets/$ID -X DELETE
+          done
