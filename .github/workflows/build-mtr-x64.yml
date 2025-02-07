@@ -43,20 +43,20 @@ jobs:
           strip release/mtr release/mtr-packet
 
           # 将两个文件打包为 .tar.gz
-          tar -czvf release/mtr-static-x86_64-${{ steps.mtr_version.outputs.version }}.tar.gz -C release/ mtr mtr-packet
+          tar -czvf release/mtr-static-x86_64.tar.gz -C release/ mtr mtr-packet
 
       - name: Upload artifact (for debugging)
         uses: actions/upload-artifact@v4
         with:
           name: mtr-static-x86_64
-          path: release/mtr-static-x86_64-${{ steps.mtr_version.outputs.version }}.tar.gz
+          path: release/mtr-static-x86_64.tar.gz
 
       - name: List release directory files
         run: ls -l release
 
       - name: Check if tar file exists
         run: |
-          if [ -f release/mtr-static-x86_64-${{ steps.mtr_version.outputs.version }}.tar.gz ]; then
+          if [ -f release/mtr-static-x86_64.tar.gz ]; then
             echo "Tar file exists."
           else
             echo "Tar file does not exist."
@@ -76,4 +76,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload v${{ steps.mtr_version.outputs.version }} release/mtr-static-x86_64-${{ steps.mtr_version.outputs.version }}.tar.gz
+          gh release upload v${{ steps.mtr_version.outputs.version }} release/mtr-static-x86_64.tar.gz
