@@ -44,6 +44,9 @@ jobs:
           name: mtr-static-x86_64
           path: release/mtr-static-x86_64.tar.gz
 
+      - name: List release directory files
+        run: ls -l release
+
       - name: Get latest tag
         id: git_tag
         run: |
