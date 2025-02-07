@@ -30,15 +30,20 @@ jobs:
       - name: Build
         run: make -j$(nproc)
 
+      - name: Get mtr version
+        id: mtr_version
+        run: |
+          MTR_VERSION=$(./mtr -v | grep -oP '\d+\.\d+')
+          echo "version=${MTR_VERSION}" >> $GITHUB_OUTPUT
+
       - name: Package binaries
         run: |
           mkdir -p release
-          cp mtr mtr-packet release/
-          strip release/mtr release/mtr-packet
-
-          # 将两个文件打包为 .tar.gz
           mv mtr mtr-${{ steps.mtr_version.outputs.version }}
           mv mtr-packet mtr-packet-${{ steps.mtr_version.outputs.version }}
+          strip mtr-${{ steps.mtr_version.outputs.version }} mtr-packet-${{ steps.mtr_version.outputs.version }}
+
+          # 将两个文件打包为 .tar.gz
           tar -czvf release/mtr-static-x86_64-${{ steps.mtr_version.outputs.version }}.tar.gz -C release/ mtr-${{ steps.mtr_version.outputs.version }} mtr-packet-${{ steps.mtr_version.outputs.version }}
 
       - name: Upload artifact (for debugging)
@@ -58,12 +63,6 @@ jobs:
             echo "Tar file does not exist."
             exit 1
           fi
-
-      - name: Get mtr version
-        id: mtr_version
-        run: |
-          MTR_VERSION=$(./mtr -v | grep -oP '\d+\.\d+')
-          echo "version=${MTR_VERSION}" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release using gh
         env:
